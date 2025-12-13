@@ -1,24 +1,31 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import 'react-native-reanimated';
+// Import ThemeProvider from YOUR file, not React Navigation
+import { ThemeProvider, useTheme } from '../src/theme';
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-export const unstable_settings = {
-  anchor: '(tabs)',
-};
-
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
+// We create a wrapper component to handle the StatusBar logic cleanly
+function RootLayoutNav() {
+  const theme = useTheme(); // Now we can use the hook inside!
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+    <>
+      <StatusBar style={theme.mode === 'dark' ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" />
+        <Stack.Screen name="lobby" />
+        <Stack.Screen name="exercise/[id]" />
+        <Stack.Screen name="chamber" />
+        <Stack.Screen name="settings" options={{ presentation: 'modal' }} /> {/* 👈 New Route */}
       </Stack>
-      <StatusBar style="auto" />
+    </>
+  );
+}
+
+export default function Layout() {
+  return (
+    // Wrap the whole app in your State Provider
+    <ThemeProvider>
+      <RootLayoutNav />
     </ThemeProvider>
   );
 }
