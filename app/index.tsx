@@ -1,7 +1,7 @@
 import { useCameraPermissions } from 'expo-camera';
 import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
 import { useGhostAuth } from '../src/hooks/useGhostAuth';
 // 1. Import the Theme Hook
 import { TYPOGRAPHY, useTheme } from '../src/theme';
@@ -27,6 +27,8 @@ export default function LoadingScreen() {
         }
       }
 
+      await new Promise(resolve => setTimeout(resolve, 3000));
+
       // If Auth is good and Camera is good -> Go to Lobby
       if (userId) {
         router.replace('/lobby');
@@ -38,15 +40,17 @@ export default function LoadingScreen() {
 
   return (
     // 3. Apply Dynamic Theme Styles
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: '#F0F1F7' }]}>
       
       {/* Spinner matches the Theme Primary (Neon or Mint) */}
       <ActivityIndicator size="large" color={theme.colors.primary} />
       
       {/* Text matches the Theme Muted color */}
-      <Text style={[styles.loadingText, { color: theme.colors.textMuted }]}>
-        Initializing RepCheck...
-      </Text>
+      <Image 
+        source={require('../assets/splash-backdrop.png')}
+        style={styles.logo}
+        resizeMode="contain"
+      />
     </View>
   );
 }
@@ -64,4 +68,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     // color handled inline
   },
+  logo: {
+    width: '100%', // Adjust size to match your preference
+    height: '100%',
+  }
 });

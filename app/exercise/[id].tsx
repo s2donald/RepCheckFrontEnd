@@ -20,12 +20,12 @@ export default function ExerciseDetailScreen() {
       {/* HEADER: Back Navigation */}
       <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
         <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.textPrimary} />
-        <Text style={[styles.backText, { color: theme.colors.textPrimary }]}>MISSION CONTROL</Text>
+        <Text style={[styles.backText, { color: theme.colors.textPrimary }]}>Go Home</Text>
       </TouchableOpacity>
 
       {/* CONTENT */}
       <View style={styles.content}>
-        <Text style={[styles.label, { color: theme.colors.textMuted }]}>TARGET IDENTIFIED</Text>
+        <Text style={[styles.label, { color: theme.colors.textMuted }]}>Excercise</Text>
         <Text style={[styles.title, { color: theme.colors.textPrimary }]}>{exercise.name}</Text>
         
         <View style={styles.statsRow}>
@@ -58,7 +58,7 @@ export default function ExerciseDetailScreen() {
 
         <View style={styles.divider} />
 
-        <Text style={[styles.label, { color: theme.colors.textMuted }]}>BRIEFING</Text>
+        <Text style={[styles.label, { color: theme.colors.textMuted }]}>Overview</Text>
         <Text style={[styles.instructions, { color: theme.colors.textSecondary }]}>
           {exercise.instructions}
         </Text>

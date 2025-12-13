@@ -21,6 +21,11 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
+    "splash": {
+      "image": "./assets/splash-backdrop.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F111A" 
+    },
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"

@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { FlatList, ImageBackground, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { MOCK_WORKOUT } from '../src/data/mockWorkout';
 import { useGhostAuth } from '../src/hooks/useGhostAuth';
@@ -79,49 +79,52 @@ export default function LobbyScreen() {
       <FlatList
         data={MOCK_WORKOUT.exercises}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingHorizontal: SPACING.gutter, paddingBottom: 100 }}
+        // Increased bottom padding to account for the toolbar
+        contentContainerStyle={{ paddingHorizontal: SPACING.gutter, paddingBottom: 120 }}
         renderItem={({ item }) => (
           
           <TouchableOpacity 
-            activeOpacity={0.9}
+            activeOpacity={0.7}
             onPress={() => router.push(`/exercise/${item.id}`)}
           >
-            {/* Wrapper View handles the Shadow */}
-            <View style={[styles.cardWrapper, theme.shadows.card]}>
-              <ImageBackground
-                source={{ }}
-                style={styles.cardBackground}
-                imageStyle={{ borderRadius: 12 }}
-              >
-                {/* Overlay handles readability */}
-                <View style={styles.cardOverlay}>
-                  
-                  {/* Card Header: Badge & Reps */}
-                  <View style={styles.cardHeader}>
-                    <View style={[
-                        styles.badge, 
-                        // Use Dynamic Badge Background from Theme
-                        { backgroundColor: theme.colors.badge[item.difficulty] }
-                    ]}>
-                      <Text style={[
-                          styles.badgeText, 
-                          // Use Dynamic Badge Text Color
-                          { color: theme.colors.badgeText[item.difficulty] }
-                      ]}>
-                        {item.difficulty}
-                      </Text>
-                    </View>
-                    
-                    <Text style={styles.repsTag}>{item.reps} REPS</Text>
-                  </View>
+            {/* THE NEW CARD CONTAINER */}
+            <View style={[
+                styles.listCardContainer, 
+                { backgroundColor: theme.colors.card }, // Dynamic card BG color
+                theme.shadows.card // Dynamic shadow
+            ]}>
 
-                  {/* Card Footer: Title */}
-                  <View>
-                    <Text style={styles.exerciseNameLight}>{item.name}</Text>
-                  </View>
+              {/* LEFT SECTION (Text Content) */}
+              <View style={styles.cardLeftContent}>
+                
+                {/* Name */}
+                <Text style={[styles.cardTitle, { color: theme.colors.textPrimary }]}>
+                  {item.name}
+                </Text>
 
+                {/* Meta Row (Reps & Badge tucked neatly here) */}
+                <View style={styles.metaRow}>
+                   <View style={[styles.badge, { backgroundColor: theme.colors.badge[item.difficulty] }]}>
+                    <Text style={[styles.badgeText, { color: theme.colors.badgeText[item.difficulty] }]}>{item.difficulty}</Text>
+                   </View>
+                   <Text style={[styles.metaReps, { color: theme.colors.textSecondary }]}>• {item.reps} Reps</Text>
                 </View>
-              </ImageBackground>
+
+                {/* Short Description */}
+                <Text 
+                  style={[styles.shortDescription, { color: theme.colors.textSecondary }]}
+                  numberOfLines={2} // Ensures it doesn't run too long if the text exceeds 6 words
+                >
+                  {item.shortDescription}
+                </Text>
+              </View>
+
+              {/* RIGHT SECTION (Squared Rounded Image) */}
+              <Image 
+                source={item.image}
+                style={styles.cardRightImage}
+              />
+
             </View>
           </TouchableOpacity>
         )}
@@ -166,6 +169,11 @@ const styles = StyleSheet.create({
   },
   
   headerLeft: { flex: 1 }, // Empty spacer
+  headerLogo: {
+    width: 120, // Adjust width to fit your specific logo text length
+    height: 40, // Adjust height to fit the navbar
+    marginBottom: 2,
+  },
   
   headerCenter: {
     flex: 2, 
@@ -254,48 +262,55 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.gutter,
   },
 
-  // CARD STYLES
-  cardWrapper: {
-    marginBottom: SPACING.m,
-    borderRadius: 12,
-    backgroundColor: 'transparent', // Let the shadow wrapper be transparent
-  },
-
-  cardBackground: {
-    height: 180, // Taller for cinematic look
-  },
-
-  cardOverlay: {
-    flex: 1,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.4)', // Dark overlay for text readability
-    padding: SPACING.m,
-    justifyContent: 'space-between',
-  },
-
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
 
-  repsTag: {
-    ...TYPOGRAPHY.label,
-    color: '#ffffff', // Always white on image
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    overflow: 'hidden',
+  listCardContainer: {
+    flexDirection: 'row', // Lays out left text and right image horizontally
+    padding: SPACING.m,
+    borderRadius: 16,
+    marginBottom: SPACING.m,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 
-  exerciseNameLight: {
-    ...TYPOGRAPHY.header,
-    fontSize: 24,
-    color: '#ffffff', // Always white on image
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: -1, height: 1 },
-    textShadowRadius: 10,
+  cardLeftContent: {
+    flex: 1, // Takes up all remaining space to the left of the image
+    paddingRight: SPACING.m, // Breathing room between text and image
+  },
+
+  cardTitle: {
+    ...TYPOGRAPHY.subHeader,
+    fontSize: 18,
+    marginBottom: 4,
+  },
+
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 8,
+  },
+
+  metaReps: {
+    ...TYPOGRAPHY.label,
+    fontSize: 11,
+  },
+
+  shortDescription: {
+    ...TYPOGRAPHY.body,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+
+  cardRightImage: {
+    width: 80,  // Squared fixed size
+    height: 80, // Squared fixed size
+    borderRadius: 12, // Rounded corners
+    backgroundColor: '#ccc', // Placeholder color while loading
   },
   
   badge: { 
