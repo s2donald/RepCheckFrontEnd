@@ -12,7 +12,7 @@ const PALETTE_DARK = {
   textMuted: '#475569',
   primary: '#00FFA3',
   danger: '#FF2E93',
-  streak: '#FFD300',
+  streak: '#FF005C',
   cyan: '#00F0FF',
   gold: '#FFD300',
   pink: '#FF2E93',

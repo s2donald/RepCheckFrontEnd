@@ -5,15 +5,33 @@ import { FlatList, Image, SafeAreaView, StyleSheet, Text, TouchableOpacity, View
 import { MOCK_WORKOUT } from '../src/data/mockWorkout';
 import { useGhostAuth } from '../src/hooks/useGhostAuth';
 // Import only what we need from the theme
+import { useWorkoutProgress } from '@/src/hooks/useWorkoutProgress';
+import { useEffect } from 'react';
 import { SPACING, TYPOGRAPHY, useTheme } from '../src/theme';
 
 export default function LobbyScreen() {
   const router = useRouter();
   const { userId } = useGhostAuth();
   const theme = useTheme();
+  const { progress, streak, completeDailyMission } = useWorkoutProgress();
+  const totalExercises = MOCK_WORKOUT.exercises.length;
+  
+  const completedExercises = MOCK_WORKOUT.exercises.filter(ex => {
+    const currentReps = progress[ex.id] || 0;
+    return currentReps >= ex.reps; // It counts as done if you hit the target
+  }).length;
 
-  const isComplete = MOCK_WORKOUT.status === 'COMPLETE';
-  const progressPercent = (MOCK_WORKOUT.completedCount / MOCK_WORKOUT.totalCount) * 100;
+  const progressPercent = totalExercises > 0 
+    ? (completedExercises / totalExercises) * 100 
+    : 0;
+
+  const isComplete = progressPercent === 100;
+
+  useEffect(() => {
+    if (isComplete) {
+      completeDailyMission();
+    }
+  }, [isComplete]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.background }]}>
@@ -31,16 +49,20 @@ export default function LobbyScreen() {
         </View>
 
         {/* RIGHT: Streak Counter */}
-        <View style={styles.headerRight}>
-          <Text style={[styles.streakText, { color: theme.colors.textPrimary }]}>
-            {MOCK_WORKOUT.streakCurrent}
-          </Text>
-          <MaterialCommunityIcons 
-            name={isComplete ? "fire" : "fire-off"} 
-            size={24} 
-            color={isComplete ? theme.colors.streak : theme.colors.textMuted} 
-          />
-        </View>
+        <View style={styles.streakContainer}>
+            <MaterialCommunityIcons 
+              name="fire" 
+              size={24} 
+              // Orange if streak > 0, Grey if 0
+              color={streak > 0 ? theme.colors.streak : '#555'} 
+            />
+            <Text style={[
+              styles.streakText, 
+              { color: streak > 0 ? theme.colors.streak : '#555' }
+            ]}>
+              {streak}
+            </Text>
+         </View>
       </View>
 
       {/* --- DASHBOARD (Date & Progress) --- */}
@@ -66,7 +88,7 @@ export default function LobbyScreen() {
           </View>
           
           <Text style={[styles.progressText, { color: theme.colors.textMuted }]}>
-            {MOCK_WORKOUT.completedCount} / {MOCK_WORKOUT.totalCount} COMPLETED
+            {completedExercises} / {totalExercises} COMPLETED
           </Text>
         </View>
       </View>
@@ -79,55 +101,85 @@ export default function LobbyScreen() {
       <FlatList
         data={MOCK_WORKOUT.exercises}
         keyExtractor={(item) => item.id}
-        // Increased bottom padding to account for the toolbar
         contentContainerStyle={{ paddingHorizontal: SPACING.gutter, paddingBottom: 120 }}
-        renderItem={({ item }) => (
+        renderItem={({ item }) => {
           
-          <TouchableOpacity 
-            activeOpacity={0.7}
-            onPress={() => router.push(`/exercise/${item.id}`)}
-          >
-            {/* THE NEW CARD CONTAINER */}
-            <View style={[
-                styles.listCardContainer, 
-                { backgroundColor: theme.colors.card }, // Dynamic card BG color
-                theme.shadows.card // Dynamic shadow
-            ]}>
+          // 3. CALCULATE STATUS
+          const currentReps = progress[item.id] || 0;
+          const targetReps = item.reps;
+          const isCompleted = currentReps >= targetReps;
+          const isPending = currentReps > 0 && !isCompleted;
 
-              {/* LEFT SECTION (Text Content) */}
-              <View style={styles.cardLeftContent}>
-                
-                {/* Name */}
-                <Text style={[styles.cardTitle, { color: theme.colors.textPrimary }]}>
-                  {item.name}
-                </Text>
+          return (
+            <TouchableOpacity 
+              activeOpacity={0.7}
+              // Pass the current reps and ID to the detail/chamber page
+              onPress={() => router.push({
+                pathname: `/exercise/${item.id}`,
+                params: { currentReps: currentReps } 
+              })}
+            >
+              <View style={[
+                  styles.listCardContainer, 
+                  { backgroundColor: theme.colors.card },
+                  theme.shadows.card,
+                  // 4. VISUAL TWEAKS FOR STATE
+                  isCompleted && { opacity: 0.6 }, // Dim if done
+                  isPending && { borderColor: theme.colors.streak, borderWidth: 1 } // Yellow border if pending
+              ]}>
 
-                {/* Meta Row (Reps & Badge tucked neatly here) */}
-                <View style={styles.metaRow}>
-                   <View style={[styles.badge, { backgroundColor: theme.colors.badge[item.difficulty] }]}>
-                    <Text style={[styles.badgeText, { color: theme.colors.badgeText[item.difficulty] }]}>{item.difficulty}</Text>
-                   </View>
-                   <Text style={[styles.metaReps, { color: theme.colors.textSecondary }]}>• {item.reps} Reps</Text>
+                {/* LEFT CONTENT */}
+                <View style={styles.cardLeftContent}>
+                  <Text style={[
+                    styles.cardTitle, 
+                    { 
+                      color: isCompleted ? theme.colors.primary : theme.colors.textPrimary,
+                      textDecorationLine: isCompleted ? 'line-through' : 'none' 
+                    }
+                  ]}>
+                    {item.name}
+                  </Text>
+
+                  <View style={styles.metaRow}>
+                     {/* Badge Logic */}
+                     {isCompleted ? (
+                       <View style={[styles.badge, { backgroundColor: theme.colors.primary }]}>
+                         <Text style={[styles.badgeText, { color: 'black' }]}>DONE</Text>
+                       </View>
+                     ) : (
+                       <View style={[styles.badge, { backgroundColor: theme.colors.badge[item.difficulty] }]}>
+                        <Text style={[styles.badgeText, { color: theme.colors.badgeText[item.difficulty] }]}>{item.difficulty}</Text>
+                       </View>
+                     )}
+                     
+                     {/* Rep Counter Logic */}
+                     <Text style={[
+                       styles.metaReps, 
+                       { color: isPending ? theme.colors.streak : theme.colors.textSecondary }
+                     ]}>
+                       • {isCompleted ? `${targetReps}/${targetReps}` : `${currentReps}/${targetReps}`} Reps
+                     </Text>
+                  </View>
+
+                  <Text style={[styles.shortDescription, { color: theme.colors.textSecondary }]} numberOfLines={2}>
+                    {item.shortDescription}
+                  </Text>
                 </View>
 
-                {/* Short Description */}
-                <Text 
-                  style={[styles.shortDescription, { color: theme.colors.textSecondary }]}
-                  numberOfLines={2} // Ensures it doesn't run too long if the text exceeds 6 words
-                >
-                  {item.shortDescription}
-                </Text>
+                {/* RIGHT IMAGE OR CHECKMARK */}
+                <View>
+                  <Image source={item.image} style={styles.cardRightImage} />
+                  {isCompleted && (
+                    <View style={styles.completedOverlay}>
+                      <MaterialCommunityIcons name="check-bold" size={32} color="#fff" />
+                    </View>
+                  )}
+                </View>
+
               </View>
-
-              {/* RIGHT SECTION (Squared Rounded Image) */}
-              <Image 
-                source={item.image}
-                style={styles.cardRightImage}
-              />
-
-            </View>
-          </TouchableOpacity>
-        )}
+            </TouchableOpacity>
+          );
+        }}
       />
       <View style={[styles.toolbar, { backgroundColor: theme.colors.card, borderTopColor: theme.colors.background }]}>
         
@@ -204,6 +256,17 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.header,
     fontSize: 20,
   },
+  streakContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4, // Space between Fire Icon and Number
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 193, 7, 0.1)', // Very subtle yellow background
+    borderWidth: 1,
+    borderColor: 'rgba(255, 193, 7, 0.2)',
+  },
 
   // DASHBOARD LAYOUT
   dashboardRow: {
@@ -260,6 +323,14 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.label, 
     marginBottom: SPACING.m,
     paddingHorizontal: SPACING.gutter,
+  },
+
+  completedOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 255, 163, 0.5)', // Green tint
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   cardHeader: {

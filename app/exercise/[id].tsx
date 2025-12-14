@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { MOCK_WORKOUT } from '../../src/data/mockWorkout';
+import { useWorkoutProgress } from '../../src/hooks/useWorkoutProgress';
 import { SPACING, TYPOGRAPHY, useTheme } from '../../src/theme';
 
 export default function ExerciseDetailScreen() {
@@ -11,6 +12,8 @@ export default function ExerciseDetailScreen() {
   const theme = useTheme();
 
   const exercise = MOCK_WORKOUT.exercises.find((e) => e.id === id);
+  const { progress } = useWorkoutProgress();
+  const currentReps = progress[exercise.id as string] || 0;
 
   if (!exercise) return null;
 
@@ -67,16 +70,18 @@ export default function ExerciseDetailScreen() {
       {/* FOOTER ACTION */}
       <View style={styles.footer}>
         <TouchableOpacity 
-          style={[
-            styles.actionButton, 
-            { backgroundColor: theme.colors.primary }, // Neon/Mint BG
-            theme.shadows.floating // Glow effect
-          ]} 
-          onPress={() => router.push('/chamber')}
+          style={[styles.actionButton, { backgroundColor: theme.colors.primary }]} 
+          onPress={() => router.push({
+            pathname: '/chamber',
+            params: { 
+              id: exercise.id, 
+              target: exercise.reps,
+              currentReps: currentReps // Pass current progress so we don't start at 0
+            }
+          })}
         >
-          {/* Button Text Color (Dark text on Neon, White text on Mint) */}
           <Text style={[styles.actionText, { color: theme.colors.buttonText }]}>
-            START EXERCISE
+            {currentReps > 0 ? 'RESUME SESSION' : 'START EXERCISE'}
           </Text>
         </TouchableOpacity>
       </View>
